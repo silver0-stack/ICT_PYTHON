@@ -53,3 +53,30 @@ height = float(input('키: '))
 weight = float(input('몸무게: '))
 
 print(f'{name}은 {age}세 {gender}이고, 키는 {height}cm, 몸무게는 {weight}kg 입니다.')
+
+# 입력연습2
+print(' **** 입력연습2 ****')
+
+'''
+키보드로 값을 입력받아 요구 조건대로 처리하고 출력되게 코드를 작성하시오
+기본값을 가진 변수 생성 할당해 둠:
+    total_point = 12500
+입력내용:
+    고객 이름: 황지니 (custom_name: str)
+    결제 금액: 3000000 (price: int)
+처리내용:
+    결제금액의 5%를 포인트(point: float)로 처리
+    계산된 포인트를 누적포인트(total_point: int)에 증가 연산 처리함
+출력내용:
+    황지니 고객님의 사용금액은 300000원, 발생 포인트는 15000
+    현재 이용하실 수 있는 누적포인트는 162500점입니다.
+
+'''
+
+total_point = 12500
+custom_name = input('고객 이름: ')
+price = int(input('결제 금액: '))
+point = price * 0.05
+total_point += point
+print(f'황지니 고객님의 사용금액은 {price}원, 발생 포인트는 {int(point)}\n'
+      f'현재 이용하실 수 있는 누적포인트는 {int(total_point)}점입니다.')
