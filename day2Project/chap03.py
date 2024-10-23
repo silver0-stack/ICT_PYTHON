@@ -24,10 +24,22 @@ print('num 변수가 가진 값: ', num) # num 변수가 가진 값:  3
 # a, b, c = 10, 20, 30
 # print('a, b, c:', a, b, c)  # a, b, c: 10 20 30
 a, b, c = 10, 20, 30
-print(a, b, c, sep = ' | ')  # a, b, c: 10 | 20 | 30
+print(a, b, c, sep = ' | ')  # a, b, c: 10 | 20 | 30 # sep: separator (구분자), 출력값들을 구분할 기호
+
+# 한 개의 값을 여러 변수에 할당할 수도 있음
+k = m = n = 10
+print(k, m, n)  # 10, 10, 10
+print(k, m, n, sep = ', ')  # 10, 10, 10
 
 
 
+# swap 공식 사용 필요 없음!
+# swapping: a, b = b, a
+print('***swapping***')
+a, b = 10, 20
+print(a, b)  # 10, 20
+a, b = b, a
+print(a, b)  # 20, 10
 
 
 
@@ -41,10 +53,32 @@ print(divmod(5, 3))  # (1, 2)
 print(5 ** 3)  # 125
 print(pow(5, 3))  # 125
 
-# 복합대입연산자
+
+#  = (순수대입연산자)
+# 복합대입연산자 : 산술대입연산자가 주로 사용됨
+# 파이썬의 산술연산자: +, -, *, /, //, %, **
+# +=, -=, *=, /=, //=, %=, **=
 a = 5
 a **= 3
 print(a)  # 125
+
+print('***복합대입연산자***')
+value = 100
+print('value: ', value) # value:  100
+value += 100
+print('value: ', value) # value:  200
+value -= 100
+print('value: ', value) # value:  100
+value *= 100
+print('value: ', value) # value:  10000
+value /= 100
+print('value: ', value) # value:  100.0
+value //= 100
+print('value: ', value) # value: 1.0 # 나눈 몫이 정수가 되게 하고 싶으면 // 쓰기
+# value %= 100
+# print('value: ', value)
+value **= 100
+print('value: ', value) # value: 1.0
 
 # math 모듈
 import math
@@ -54,6 +88,10 @@ print(math.factorial(5))  # 5! # 120
 print(math.pi)  # 3.141592653589793
 print(math.sin(math.radians(90)))  # sin(90°) # 1.0
 
+
+# 파이썬 코드 문장은 한 줄 작성이 원칙
+# 문장이 길어서 한 줄 작성이 불편할 경우에는 여러 줄로 나눌 수는 있음
+# 단, 문장이 끊어지는 부분에 반드시 백슬러시(\)를 표시해야 함
 print('ringo the best\n' * 3)
 
 # str slicing
