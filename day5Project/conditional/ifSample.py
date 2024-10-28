@@ -110,3 +110,9 @@ def shortCondition():
     a = 1
     message = 'a is 1' if a == 1 else 'a is not 1'
     print(message)
+
+
+def shortCondition2():
+    score = int(input('점수 입력: '))
+    message = '합격' if score>=60 else '불합격'
+    print(message)

@@ -15,6 +15,7 @@ if __name__ == '__main__':
     # ifs.test_in()
     # ifs.checkPayment()
     # ifs.checkPayment2()
-    ifs.shortCondition()
+    # ifs.shortCondition()
+    ifs.shortCondition2()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
