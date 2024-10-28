@@ -53,7 +53,7 @@ def test2():
     # 3-7. dict_3.values(): value만 list로
     print('3-7. dict_3.values():', dict_3.values())  # dict_values(['green', 'red', 'orange'])
 
-    # 3-8. dict_3.items(): key-value ��� list로
+    # 3-8. dict_3.items(): key-value가 튜플 안에 list로 존재
     print('3-8. dict_3.items():', dict_3.items())  # dict_items([('apple', 'green'), ('cherry', 'red'), ('orange', 'orange')])
 
     # 3-9. dict_3.clear(): value 전체 삭제(저장 아이템 전체 삭제)
@@ -120,7 +120,6 @@ def test4():
     dict_5.update(dict_6)
     print('5. dict_5.update(dict_6):', dict_5) # {'apple': 'green', 'banana': 'yellow', 'cherry': 'red','melon': 'yellow'}
 
-    # copy() 함수: 사전 객체를 새로 만들고 아이템들을 복사함(shallow copy)
     print('dict_5 id: ', id(dict_5))
     dict_7 = dict_5.copy() # 2102195017088
     print('6. dict_7.copy():', dict_7) # {'apple': 'green', 'banana': 'yellow', 'cherry': 'red','melon': 'yellow'}
@@ -140,5 +139,11 @@ def test5():
 
     # in operator: dict_9.keys() or dict_9.values()
     print('7-2. "red" in dict_9.values():', 'red' in dict_9.values())  # True
+
+
     print('7-3. "yellow" in dict_9.keys():', 'yellow' in dict_9.keys())  # False
+
+    # 키로 값 조회 : 사전변수[키] == get(key)
+    dict_10 = {'apple': 'red', 'banana': 'yellow', 'cherry': 'red'}
+    doct
 
