@@ -101,3 +101,12 @@ def checkPayment2():
         print(f'{price} 원을 {payment[no]}로 결제했습니다.')
     else:
         print('1~3 번호만 입력하세요.')
+
+
+
+# 간단 if문
+# 변수 = 참일 때 실행값 if 조건식 else 거짓일 때 실행할 값들
+def shortCondition():
+    a = 1
+    message = 'a is 1' if a == 1 else 'a is not 1'
+    print(message)
