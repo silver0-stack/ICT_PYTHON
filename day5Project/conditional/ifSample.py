@@ -56,8 +56,48 @@ def test_square():
 # for문 사용 가능한 객체들과는 다 호환 가능함
 # x not in s => s 안에 x가 없느냐? => x가 없으면 True, x가 있으면 False 리턴
 def test_in():
-    print(2 in [1, 2, 3]) # True
-    print(2 not in [1, 2, 3]) # False
-    print('a' in 'abcdef') # True
-    print('a' not in 'abcdef') # False
+    print(2 in [1, 2, 3])  # True
+    print(2 not in [1, 2, 3])  # False
+    print('a' in 'abcdef')  # True
+    print('a' not in 'abcdef')  # False
 
+
+def checkPayment():
+    payment = ['card', 'money', 'mobile']
+    price = 5000
+
+    if 'money' in payment:
+        print(f'현금 {price}원으로 결제')
+    else:
+        print(f'결제할 수 없습니다.')
+
+    if 'bank' in payment:
+        print(f'{price}원을 현금 지불했습니다.')
+    else:
+        print(f'다른 결제 수단을 선택하세요.')
+
+
+# 조건문 작성형식 3: 다중 if 문
+# if ... elif ... else ...
+# if ... elif ... elif... elif....
+def checkPayment2():
+    payment = ['결제수단', '카드', '현금', '모바일', '제로페이']
+    print('================결제수단 선택 ================')
+    print('1. 카드')
+    print('2. 현금')
+    print('3. 모바일')
+    print('4. 제로페이')
+
+    no = int(input('결제할 번호를 입력하세요: '))
+    price = int(input('결제할 금액: '))
+
+    if no == 1:
+        print(f'{price} 원을 {payment[no]}로 결제했습니다.')
+    elif no == 2:
+        print(f'{price} 원을 {payment[no]}로 결제했습니다.')
+    elif no == 3:
+        print(f'{price} 원을 {payment[no]}로 결제했습니다.')
+    elif no == 4:
+        print(f'{price} 원을 {payment[no]}로 결제했습니다.')
+    else:
+        print('1~3 번호만 입력하세요.')

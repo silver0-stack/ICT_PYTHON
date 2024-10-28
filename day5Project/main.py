@@ -12,6 +12,8 @@ if __name__ == '__main__':
     # ifs.test_if()
     # ifs.test_even()
     # ifs.test_square()
-    ifs.test_in()
+    # ifs.test_in()
+    # ifs.checkPayment()
+    ifs.checkPayment2()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
