@@ -116,7 +116,7 @@ def for_indexin():
 # 키보드로 구구단의 단 수를 입력받아서 해당 단의 구구단 출력
 def print_gugudan():
     dan = int(input('구구단의 단수를 입력하세요: '))
-    for i in range(1, 10): # 1 ~ 9
+    for i in range(1, 10):  # 1 ~ 9
         print(f'{dan} x {i}  = {dan * i}')
 
 
@@ -127,3 +127,57 @@ def doubleFor():
         for i in range(1, 10):
             print(f'{dan} x {i} = {dan * i}')
         print('\n')
+
+
+
+
+#  list | tuple | set 안에 list, tuple, set이 저장된 경우
+#  첫번째 추출은 리스트(튜플, 셋) 안의 아이템(리스트, 튜플, 셋) 추출임
+#  꺼낸 아이템이 리스트(튜플)일 경우, 해당 아이템 안의 값들을 하나씩 추출하려면
+#  이중 for문 사용이 필요함
+
+# 리스트 안의 아이템 안의 값의 개수가 동일할 경우에는 단순 for문을 해결 가능함
+def list_in_list():
+    fruit_list = [['apple', 10, 800], ['banana', 3, 5000], ['orange', 2, 2000]]
+    for fname, famount, fprice in fruit_list:
+        print(f'{fname}의 단가는 {fprice}원이고 구매수량은 {famount}개, 구매가격은 {famount * fprice}원입니다.')
+
+
+# 리스트 안의 아이템 안의 값 개수가 제각각인 경우
+#  아이템 안의 각 값들을 처리하려며 이중 for문 사용함
+def list_in_list2():
+    nlist= [['aa', 'bb', 800], [10, 50, 3, 5000], [1.2, 55.3, 59.11]]
+    for item in nlist: # 내부 리스트
+        print(item)
+        for data in item:
+            print(data)
+
+
+# 위의 리스트 처리를 인덱스 방식으로 바꾼다면
+# 데이터 처리할 때 인덱스 방식을 주로 쓰기 때문에 인덱스 방식으로 기억해야 함
+def list_in_list3():
+    nlist= [['aa', 'bb', 800], [10, 50, 3, 5000], [1.2, 55.3, 59.11]]
+    for index in range(len(nlist)):
+        print(nlist[index])
+        for i in range(len(nlist[index])):
+            print(i)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
