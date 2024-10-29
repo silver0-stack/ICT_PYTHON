@@ -4,6 +4,7 @@
 import test_set.set_sample as ss
 import test_bool.operator_sample as sam
 import conditional.ifSample as ifs
+import conditional.ifMission1 as ifM1
 
 if __name__ == '__main__':
     # ss.test1()
@@ -16,6 +17,9 @@ if __name__ == '__main__':
     # ifs.checkPayment()
     # ifs.checkPayment2()
     # ifs.shortCondition()
-    ifs.shortCondition2()
+    # ifs.shortCondition2()
+    # ifM1.practice1()
+    # ifM1.practice2()
+    ifM1.practice3()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 
