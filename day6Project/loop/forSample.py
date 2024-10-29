@@ -118,3 +118,12 @@ def print_gugudan():
     dan = int(input('구구단의 단수를 입력하세요: '))
     for i in range(1, 10): # 1 ~ 9
         print(f'{dan} x {i}  = {dan * i}')
+
+
+# 중첩 for문
+# 구구단 2단부터 9단까지 출력 처리
+def doubleFor():
+    for dan in range(2, 10):
+        for i in range(1, 10):
+            print(f'{dan} x {i} = {dan * i}')
+        print('\n')
