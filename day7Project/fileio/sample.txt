@@ -1,0 +1,2 @@
+표준 출력을 바꾸어 파일에 내용이 기록됨
+D:\python_workspace\day7Project1\fileio\example.txtD:\python_workspace\day7Project1\fileio\sample.txt
