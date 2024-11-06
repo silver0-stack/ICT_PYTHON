@@ -6,11 +6,22 @@
 # 패키지 설치 후에 추가 설치: 파이썬에서 오라클 서버에 접속하기 위한 클라이언트 도구 필요함
 # 오라클 서버 버전에서 windows 64bit용 zip 다운받음
 # 해당 경로 dept 얕게 하기 위해 D드라이브에 복사함
-# D:\instantclient_18_5\bin\nt64\instantclient_18_5.dll -> cx_Oracle.dll
+# D:\instantclient_18_5
 
-location = 'D:\\instantclient_18_5'
 
 import cx_Oracle
+import os
+# 오라클 드라이브(instanceclient) 등록
+location = 'D:\\instantclient_18_5'
+# 드라이브 등록 방법 1: 환경변수 path에 등록(파이썬 코드로 path 에 등록시킴)
+os.environ['PATH'] = location + ';'+ os.environ['PATH']
+
+# 드라이브 등록 방법 2: 코드 구문으로 오라클 초기 설정 지정함
+# 주의: 애플리케이션 전체 실행 시 딱 한 번 구동되게 해야 함
+cx_Oracle.init_oracle_client(lib_dir=location)
+
+
+
 
 # 데이터베이스 연결 설정
 dbUser = 'c##scott'
