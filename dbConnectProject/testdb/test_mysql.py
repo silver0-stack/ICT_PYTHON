@@ -34,3 +34,75 @@
 # MS SQL Server: pyodbc | pymssql
 # Redis: redis-py
 # mongoDB: pymongo
+# casandra: cassandra-driver
+# maraiDB: mariadb
+
+
+# 1. 연결할 DB에 대한 패키지를 설치한 다음에 import 선언하고 사용함
+import pymysql
+
+# 2. 해당 데이터베이스에 연결하기 위한 코드 작성
+# db 서버의 ip주소(url), port 번호, 사용자 계정과 암호
+dbURL = 'localhost'
+dbPort = 3306
+dbUser = 'root'
+dbPASS = '1234'
+
+
+# 3. pymysql.connect() 함수를 사용해서 MySQL DB에 접속
+conn = pymysql.connect(host=dbURL, port=dbPort, user=dbUser, password=dbPASS, db='testdb',\
+                       charset='utf8', use_unicode=True)
+
+
+# 연결 여부 확인
+if conn is None:
+    print("db 연결 실패")
+else:
+    print("db 연결 성공")
+
+
+# 4. DB 연결이 성공하면 cursor 객체 생성해서 Cursor object를 반환
+cursor = conn.cursor()
+
+# 5. SQL query를 작성하여 실행(테이블 생성)
+cursor.execute("""
+SELECT * FROM employee
+)
+""")
+
+# 조회된 모든 결과를 받음. 반환 자료형은 tuple임
+cursor.fetchall()
+# 이후 결과 매핑 처리: 반복문으로 각 행의 컬럼값들을 vo(dto)클래스 객체의 필드(proeprty)에 저장 처리
+
+# 쿼리문이 dml이면 트랜잭션 처리가 필수임
+# 변경사항 커밋
+conn.commit()
+
+# 연결 종료
+cursor.close()
+conn.close()
+
+print("DB 연결 종료")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
