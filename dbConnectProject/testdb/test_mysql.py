@@ -16,4 +16,21 @@
 # 두번째 방법:
 # 모든 파이썬 개발툴에서 공통으로 사용하는 방법임
 # Terminal (터미널) 탭(왼쪽 아래)
-# 프롬프트 표시됨: (가상환경종류)
+# 프롬프트 표시됨: (가상환경종류) 터미널 종류
+# 프롬프트에 설치 명령어를 직접 입력해서 패키지 설치함
+# pip install 설치할패키지명
+# 주의사항: pip 버전을 먼저 upgrade 해야 되는 경우가 있음
+# ...>python -m pip install --upgrade pip
+# ...> pip --version
+# 패키지 설치와 pip 업그레이드 동시에 수행할 수도 있음
+#  ...> python -m pip install --upgrade [패키지명]
+
+# 데이터베이스 연결에 필요한 파이썬 패키지
+# mysql db (maria db): pymysql
+# oracle db: cx-Oracle => 에러 발생 시 선행 조치 내용 확인하고 해결함
+# SQLite: 파이썬 내장 라이브러리임(설치 필요없음), 파일 기반의 경량 데이터베이스임
+# PostgreSQL: psycopg2 | pg8000
+# mongoDB: pymongo
+# MS SQL Server: pyodbc | pymssql
+# Redis: redis-py
+# mongoDB: pymongo
