@@ -5,13 +5,10 @@ import re
 from collections import Counter
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
-import schedule
-import time
 import logging
 import os
 from dotenv import load_dotenv
 import sys
-import matplotlib.font_manager as fm
 
 # 환경 변수 로드
 load_dotenv()

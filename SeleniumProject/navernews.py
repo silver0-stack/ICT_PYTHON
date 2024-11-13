@@ -7,7 +7,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 import traceback
-import cx_Oracle
 
 # Chrome 옵션 설정
 chrome_options = Options()
