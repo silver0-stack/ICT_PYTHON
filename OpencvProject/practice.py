@@ -31,7 +31,7 @@ def grayscale():
 
 
 def video_stream():
-    cap = cv2.VideoCapture(0)  # 0: 기본 카메라 사용
+    cap = cv2.VideoCapture(0)  # 0: 기본 카메라 사용, 만약 카메라가 두 대 있다면 VideoCapture(0), VideoCapture(1) ...
 
     while True:
         ret, frame = cap.read()
