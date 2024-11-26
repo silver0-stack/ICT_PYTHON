@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>노인 말동무 AI</title>
+</head>
+<body>
+    <h1>노인 말동무 AI</h1>
+    <div>
+        <label for="userMessage"></label>
+        <input type="text" id="userMessage" placeholder="메시지를 입력하세요" onkeydown="checkEnterKey(event)">
+        <button onclick="sendTextMessage()">전송</button>
+        <button onclick="speakMessage()">음성 듣기</button>
+        <button onclick="startRealTimeConversation()">🎤 실시간 음성 대화 시작</button>
+        <button onclick="stopRealTimeConversation()">🛑 음성 대화 종료</button>
+    </div>
+    <div id="chatOutput"></div>
+
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("이 브라우저는 음성 인식을 지원하지 않습니다. 크롬 브라우저를 사용해주세요.");
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.continuous = true;
+
+        let isConversationActive = false;
+        let silenceTimer;
+
+        // 텍스트 메시지 전송
+        async function sendTextMessage() {
+            const userMessage = document.getElementById("userMessage").value;
+
+            if (!userMessage.trim()) {
+                addMessageToChat("시스템: 입력된 메시지가 없습니다.");
+                return;
+            }
+
+            addMessageToChat(`사용자: ${userMessage}`);
+            const response = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            });
+            const data = await response.json();
+
+            addMessageToChat(`AI: ${data.reply}`);
+            await playTTS(data.reply);
+
+            document.getElementById("userMessage").value = "";
+        }
+
+        // 대화 시작
+        function startRealTimeConversation() {
+            if (isConversationActive) {
+                addMessageToChat("시스템: 이미 대화가 진행 중입니다.");
+                return;
+            }
+            isConversationActive = true;
+
+            recognition.start();
+            addMessageToChat("시스템: 실시간 대화가 시작되었습니다.");
+
+            recognition.onresult = async function(event) {
+                clearTimeout(silenceTimer);
+                const transcript = event.results[event.results.length - 1][0].transcript.trim();
+                addMessageToChat(`사용자: ${transcript}`);
+
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: transcript })
+                });
+                const data = await response.json();
+
+                addMessageToChat(`AI: ${data.reply}`);
+                await playTTS(data.reply);
+
+                // startSilenceTimer();
+            };
+
+            recognition.onerror = function(event) {
+                console.error("음성 인식 오류:", event.error);
+                addMessageToChat(`시스템: 음성 인식 오류 - ${event.error}`);
+            };
+        }
+
+        // 대화 종료
+        function stopRealTimeConversation() {
+            if (!isConversationActive) {
+                addMessageToChat("시스템: 대화가 진행 중이지 않습니다.");
+                return;
+            }
+            isConversationActive = false;
+
+            recognition.stop();
+            clearTimeout(silenceTimer);
+            addMessageToChat("시스템: 실시간 대화가 종료되었습니다.");
+        }
+
+        // 일정 시간 동안 침묵 시 대화 종료
+        function startSilenceTimer() {
+            silenceTimer = setTimeout(() => {
+                addMessageToChat("시스템: 일정 시간 동안 말씀이 없어 대화를 종료합니다.");
+                stopRealTimeConversation();
+            }, 10000); // 10초 동안 침묵 시 종료
+        }
+
+        // 채팅 메시지 추가
+        function addMessageToChat(message) {
+            const chatOutput = document.getElementById("chatOutput");
+            chatOutput.insertAdjacentHTML("afterbegin", `<p>${message}</p>`);
+        }
+
+        // AI 응답 음성 재생
+        async function playTTS(text) {
+            const response = await fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: text })
+            });
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            await audio.play();
+        }
+
+        // Enter 키로 텍스트 전송
+        function checkEnterKey(event) {
+            if (event.key === "Enter") {
+                sendTextMessage();
+            }
+        }
+
+        async function speakMessage() {
+            const userMessage = document.getElementById("userMessage").value;
+            const response = await fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: userMessage })
+            });
+            const audioBlob = await response.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            await audio.play();
+        }
+    </script>
+</body>
+</html>
