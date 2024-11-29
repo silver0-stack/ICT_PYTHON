@@ -18,7 +18,7 @@ for folder in [train_dir, val_dir, test_dir]:
     os.makedirs(os.path.join(folder, "cats"), exist_ok=True) # 'cats' 폴더 생성
     os.makedirs(os.path.join(folder, "dogs"), exist_ok=True) # 'dogs' 폴더 생성
 
-# 데이터 분배 함수
+# 데이터 분배 함수 정의
 def split_data(src_dir, train_dir, val_dir, test_dir, split_ratio=(0.7, 0.15, 0.15)):
     files = os.listdir(src_dir)
     random.shuffle(files)
