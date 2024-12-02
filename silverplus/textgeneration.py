@@ -87,12 +87,13 @@ def chat(current_user):
     # 사용자 메시지 데이터 생성
     user_chat_data = {
         "msgId": user_msg_id,
-        "msgSenderRole": "user",
+        "msgSenderRole": "USER",
         "msgContent": user_message,
         "msgSentAt": sent_at,
         "msgSenderUUID": current_user,  # JWT에서 추출한 사용자 UUID
-        "conversationId": conversation_id,
-        "parentMsgId": None
+        "parentMsgId": None,
+        "msgType": "T",  # 메시지 타입 추가 (T for text)
+        "msgWorkspaceId": "111"
     }
 
     # Authorization 헤더에 토큰 포함
@@ -138,12 +139,13 @@ def chat(current_user):
     # AI 응답 데이터 생성
     assistant_chat_data = {
         "msgId": assistant_msg_id,
-        "msgSenderRole": "assistant",
+        "msgSenderRole": "AI",
         "msgContent": ai_reply,
         "msgSentAt": reply_sent_at,
-        "msgSenderUUID": "assistant-uuid",  # 어시스턴트의 UUID로 설정
-        "conversationId": conversation_id,
-        "parentMsgId": user_msg_id
+        "msgSenderUUID": "ai-uuid-1234-5678-90ab-cdef12345678",  # 어시스턴트의 UUID로 설정
+        "parentMsgId": user_msg_id,
+        "msgType": "T",  # 메시지 타입 추가 (T for text)
+        "msgWorkspaceId": "111"
     }
 
     # Spring Boot API를 통해 AI 응답 저장
