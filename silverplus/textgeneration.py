@@ -9,8 +9,13 @@ import jwt
 from functools import wraps
 import requests
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
+import base64
+
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, allow_headers=["Authorization", "Content-Type"])
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -23,34 +28,49 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 SPRING_BOOT_API_URL = os.getenv("SPRING_BOOT_API_URL")
 
 
-def token_requried(f):
+# textgeneration.py
+
+
+def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
         if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split(" ")[1]
+            auth_header = request.headers['Authorization']
+            log.debug(f"Authorization Header: {auth_header}")  # 헤더 로그 추가
+            if auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+        else:
+            log.debug("Authorization header not found")  # 헤더 없음 로그 추가
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
         try:
-            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = data['user']  # 'user'키에 UUID가 저장되어 있다고 가정
+            # Base64로 인코딩된 SECRET_KEY를 디코딩
+            decoded_secret_key = base64.b64decode(SECRET_KEY)
+            data = jwt.decode(token, decoded_secret_key, algorithms=["HS256"])
+            current_user = data['sub']  # 'sub' 키에서 사용자 UUID 추출
+            log.debug(f"Current User: {current_user}")  # 사용자 로그 추가
         except Exception as e:
             log.error(f"Token decoding error: {str(e)}")
             return jsonify({'message': 'Token is invalid!'}), 401
         return f(current_user, *args, **kwargs)
-
     return decorated
 
 
-app = Flask(__name__)
-CORS(app)  # 모든 도메인에 대해 CORS 허용
+
+
 
 
 # Flask애서 JWT 토큰을 디코딩할 때, current_user 객체에 id 속성이 포함되어 있다고 가정했다.
 # Chat Completion 엔드포인트
+# Flask 애플리케이션 코드 수정
 @app.route("/chat", methods=["POST"])
-@token_requried
+@token_required
 def chat(current_user):
+    # 사용자로부터 받은 JWT 토큰 추출
+    auth_header = request.headers.get('Authorization', '')
+    token = auth_header.split(' ')[1] if 'Bearer ' in auth_header else None
+
     user_message = request.json.get("message")
     if not user_message:
         return jsonify({"error": "No message provided."}), 400
@@ -58,13 +78,13 @@ def chat(current_user):
     # conversationId를 사용자 UUID로 고정
     conversation_id = current_user
 
-    # 사용자 메시지 ID 생성 (UUID)
-    user_msg_id = uuid.uuid4()
+    # 사용자 메시지 ID 생성 (UUID 문자열로 변환)
+    user_msg_id = str(uuid.uuid4())
 
-    # 현재 시각 (ISO 포맷)
-    sent_at = datetime.utcnow().isoformat()
+    # 현재 시각 (UTC, timezone-aware 객체)
+    sent_at = datetime.now(timezone.utc).isoformat()
 
-    #  사용자 메시지 데이터 생성
+    # 사용자 메시지 데이터 생성
     user_chat_data = {
         "msgId": user_msg_id,
         "msgSenderRole": "user",
@@ -75,11 +95,17 @@ def chat(current_user):
         "parentMsgId": None
     }
 
+    # Authorization 헤더에 토큰 포함
+    headers = {}
+    if token:
+        headers['Authorization'] = f'Bearer {token}'
+
     # Spring Boot API를 통해 사용자 메시지 저장
     try:
         response_user = requests.post(
             f"{SPRING_BOOT_API_URL}/api/chat/save",
-            json=user_chat_data
+            json=user_chat_data,
+            headers=headers  # 토큰 포함
         )
         if response_user.status_code != 201:
             log.error(f"Failed to save user message: {response_user.text}")
@@ -103,12 +129,12 @@ def chat(current_user):
         log.error(f"Exception when calling OpenAI:  {str(e)}")
         return jsonify({"error": f"Exception when calling OpenAI: {str(e)}"}), 500
 
-    # AI 메시지 데이터 생성 (UUID)
-    assistant_msg_id = uuid.uuid4()
+    # AI 메시지 데이터 생성 (UUID 문자열로 변환)
+    assistant_msg_id = str(uuid.uuid4())
 
-    # AI 응답 시각 (ISO 포맷)
-    reply_sent_at = datetime.utcnow().isoformat()
-    
+    # AI 응답 시각 (UTC, timezone-aware 객체)
+    reply_sent_at = datetime.now(timezone.utc).isoformat()
+
     # AI 응답 데이터 생성
     assistant_chat_data = {
         "msgId": assistant_msg_id,
@@ -120,12 +146,12 @@ def chat(current_user):
         "parentMsgId": user_msg_id
     }
 
-
     # Spring Boot API를 통해 AI 응답 저장
     try:
         response_assistant = requests.post(
             f"{SPRING_BOOT_API_URL}/api/chat/save",
-            json=assistant_chat_data
+            json=assistant_chat_data,
+            headers=headers  # 토큰 포함
         )
         if response_assistant.status_code != 201:
             log.error(f"Failed to save AI message: {response_assistant.text}")
@@ -135,7 +161,6 @@ def chat(current_user):
         return jsonify({"error": f"Exception when saving assistant message: {str(e)}"}), 500
 
     return jsonify({"reply": ai_reply})
-
 
 
 
