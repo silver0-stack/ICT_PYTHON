@@ -1,7 +1,7 @@
 import openai
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, send_file
 from pathlib import Path
 from gtts import gTTS
 from flask_cors import CORS
@@ -12,7 +12,6 @@ import uuid
 from datetime import datetime, timezone
 import logging
 import base64
-
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, allow_headers=["Authorization", "Content-Type"])
@@ -28,46 +27,76 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 SPRING_BOOT_API_URL = os.getenv("SPRING_BOOT_API_URL")
 
 
-# textgeneration.py
-
-
+# JWT 토큰 검증 데코레이터
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
         if 'Authorization' in request.headers:
             auth_header = request.headers['Authorization']
-            log.debug(f"Authorization Header: {auth_header}")  # 헤더 로그 추가
             if auth_header.startswith("Bearer "):
                 token = auth_header.split(" ")[1]
-        else:
-            log.debug("Authorization header not found")  # 헤더 없음 로그 추가
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
         try:
-            # Base64로 인코딩된 SECRET_KEY를 디코딩
             decoded_secret_key = base64.b64decode(SECRET_KEY)
             data = jwt.decode(token, decoded_secret_key, algorithms=["HS256"])
-            current_user = data['sub']  # 'sub' 키에서 사용자 UUID 추출
-            log.debug(f"Current User: {current_user}")  # 사용자 로그 추가
+            current_user = data['sub']
         except Exception as e:
             log.error(f"Token decoding error: {str(e)}")
             return jsonify({'message': 'Token is invalid!'}), 401
         return f(current_user, *args, **kwargs)
+
     return decorated
 
 
+# 워크스페이스 자동 생성 로직
+def get_or_create_workspace(current_user, token):
+    headers = {'Authorization': f'Bearer {token}'}
+    workspace_check_url = f"{SPRING_BOOT_API_URL}/api/workspace/{current_user}"
+
+    # 워크스페이스 존재 여부 확인
+    workspace_response = requests.get(workspace_check_url, headers=headers)
+    log.debug(f"Workspace check response: {workspace_response.status_code}, {workspace_response.text}")
+
+    if workspace_response.status_code == 200:
+        try:
+            workspace_data = workspace_response.json()
+            workspace_id = workspace_data.get("data", {}).get("workspaceId")
+            log.info(f"Existing Workspace ID: {workspace_id}")
+            return workspace_id
+        except Exception as e:
+            log.error(f"Failed to parse workspace data: {e}")
+            raise Exception("Failed to parse workspace response")
+
+    elif workspace_response.status_code == 404:
+        # 워크스페이스 생성 요청
+        log.debug(f"Extracted current_user from JWT: {current_user}")
+        workspace_create_url = f"{SPRING_BOOT_API_URL}/api/workspace/create?memUuid={current_user}"
+        create_response = requests.post(workspace_create_url, headers=headers)
+        log.debug(f"Workspace create response: {create_response.status_code}, {create_response.text}")
+
+        if create_response.status_code == 201:
+            try:
+                created_workspace_data = create_response.json()
+                workspace_id = created_workspace_data.get("data", {}).get("workspaceId")
+                log.info(f"Created Workspace ID: {workspace_id}")
+                return workspace_id
+            except Exception as e:
+                log.error(f"Failed to parse created workspace data: {e}")
+                raise Exception("Failed to parse created workspace response")
+        else:
+            log.error(f"Workspace creation failed: {create_response.text}")
+            raise Exception("Failed to create workspace")
+    else:
+        log.error(f"Unexpected workspace response: {workspace_response.status_code}")
+        raise Exception("Failed to retrieve workspace")
 
 
-
-
-# Flask애서 JWT 토큰을 디코딩할 때, current_user 객체에 id 속성이 포함되어 있다고 가정했다.
 # Chat Completion 엔드포인트
-# Flask 애플리케이션 코드 수정
 @app.route("/chat", methods=["POST"])
 @token_required
 def chat(current_user):
-    # 사용자로부터 받은 JWT 토큰 추출
     auth_header = request.headers.get('Authorization', '')
     token = auth_header.split(' ')[1] if 'Bearer ' in auth_header else None
 
@@ -75,39 +104,29 @@ def chat(current_user):
     if not user_message:
         return jsonify({"error": "No message provided."}), 400
 
-    # conversationId를 사용자 UUID로 고정
-    conversation_id = current_user
+    try:
+        workspace_id = get_or_create_workspace(current_user, token)
+    except Exception as e:
+        log.error(f"Workspace creation error: {str(e)}")
+        return jsonify({"error": "Failed to create or retrieve workspace."}), 500
 
-    # 사용자 메시지 ID 생성 (UUID 문자열로 변환)
     user_msg_id = str(uuid.uuid4())
-
-    # 현재 시각 (UTC, timezone-aware 객체)
     sent_at = datetime.now(timezone.utc).isoformat()
 
-    # 사용자 메시지 데이터 생성
     user_chat_data = {
         "msgId": user_msg_id,
         "msgSenderRole": "USER",
         "msgContent": user_message,
         "msgSentAt": sent_at,
-        "msgSenderUUID": current_user,  # JWT에서 추출한 사용자 UUID
+        "msgSenderUUID": current_user,
         "parentMsgId": None,
-        "msgType": "T",  # 메시지 타입 추가 (T for text)
-        "msgWorkspaceId": "111"
+        "msgType": "T",
+        "msgWorkspaceId": workspace_id
     }
 
-    # Authorization 헤더에 토큰 포함
-    headers = {}
-    if token:
-        headers['Authorization'] = f'Bearer {token}'
-
-    # Spring Boot API를 통해 사용자 메시지 저장
+    headers = {'Authorization': f'Bearer {token}'}
     try:
-        response_user = requests.post(
-            f"{SPRING_BOOT_API_URL}/api/chat/save",
-            json=user_chat_data,
-            headers=headers  # 토큰 포함
-        )
+        response_user = requests.post(f"{SPRING_BOOT_API_URL}/api/chat/save", json=user_chat_data, headers=headers)
         if response_user.status_code != 201:
             log.error(f"Failed to save user message: {response_user.text}")
             return jsonify({"error": "Failed to save user message."}), 500
@@ -115,46 +134,37 @@ def chat(current_user):
         log.error(f"Exception when saving user message: {str(e)}")
         return jsonify({"error": f"Exception when saving user message: {str(e)}"}), 500
 
-    # OpenAI Chat Completion API를 통해 응답 생성
     try:
         response = openai.ChatCompletion.create(
             model="gpt-4-turbo",
             messages=[
                 {"role": "system",
-                 "content": "You are a helpful assistant designed to have friendly and patient conversations with elderly users."},
+                 "content": "You are a friendly AI assistant designed for elderly users. Speak slowly and respond with warmth."},
                 {"role": "user", "content": user_message}
             ]
         )
         ai_reply = response.choices[0].message["content"].strip()
     except Exception as e:
-        log.error(f"Exception when calling OpenAI:  {str(e)}")
+        log.error(f"Exception when calling OpenAI: {str(e)}")
         return jsonify({"error": f"Exception when calling OpenAI: {str(e)}"}), 500
 
-    # AI 메시지 데이터 생성 (UUID 문자열로 변환)
     assistant_msg_id = str(uuid.uuid4())
-
-    # AI 응답 시각 (UTC, timezone-aware 객체)
     reply_sent_at = datetime.now(timezone.utc).isoformat()
 
-    # AI 응답 데이터 생성
     assistant_chat_data = {
         "msgId": assistant_msg_id,
         "msgSenderRole": "AI",
         "msgContent": ai_reply,
         "msgSentAt": reply_sent_at,
-        "msgSenderUUID": "ai-uuid-1234-5678-90ab-cdef12345678",  # 어시스턴트의 UUID로 설정
+        "msgSenderUUID": "ai-uuid-1234-5678-90ab-cdef12345678",
         "parentMsgId": user_msg_id,
-        "msgType": "T",  # 메시지 타입 추가 (T for text)
-        "msgWorkspaceId": "111"
+        "msgType": "T",
+        "msgWorkspaceId": workspace_id
     }
 
-    # Spring Boot API를 통해 AI 응답 저장
     try:
-        response_assistant = requests.post(
-            f"{SPRING_BOOT_API_URL}/api/chat/save",
-            json=assistant_chat_data,
-            headers=headers  # 토큰 포함
-        )
+        response_assistant = requests.post(f"{SPRING_BOOT_API_URL}/api/chat/save", json=assistant_chat_data,
+                                           headers=headers)
         if response_assistant.status_code != 201:
             log.error(f"Failed to save AI message: {response_assistant.text}")
             return jsonify({"error": "Failed to save AI message."}), 500
@@ -165,32 +175,34 @@ def chat(current_user):
     return jsonify({"reply": ai_reply})
 
 
-
 # TTS 음성 변환 엔드포인트
 @app.route("/speak", methods=["POST"])
 def speak():
     text = request.json.get("text")
-    tts = gTTS(text=text, lang="ko", slow=False)
+    tts = gTTS(text=text, lang="ko", slow=True)
     speech_file_path = Path("speech.mp3")
     tts.save(speech_file_path)
     return send_file(speech_file_path, mimetype="audio/mpeg")
 
 
-# STT 변환 엔드포인트 (옵션)
+# STT 음성 인식 엔드포인트
 @app.route("/transcribe", methods=["POST"])
 def transcribe():
-    audio_file = request.files["file"]
-    audio_path = Path("uploaded_audio.mp3")
-    audio_file.save(audio_path)
+    try:
+        audio_file = request.files["file"]
+        audio_path = Path("uploaded_audio.mp3")
+        audio_file.save(audio_path)
 
-    with open(audio_path, "rb") as f:
-        transcription = openai.Audio.transcriptions.create(
-            model="whisper-1",
-            file=f
-        )
+        with open(audio_path, "rb") as f:
+            transcription = openai.Audio.transcriptions.create(
+                model="whisper-1",
+                file=f
+            )
 
-    return jsonify({"transcription": transcription["text"]})
+        return jsonify({"transcription": transcription["text"]})
+    except Exception as e:
+        return jsonify({"error": "Failed to transcribe audio. Please try again."}), 400
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)  # 포트 번호 변경 가능
+    app.run(debug=True, port=5000)
