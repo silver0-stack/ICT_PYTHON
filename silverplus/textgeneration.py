@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_file
 from pathlib import Path
-from gtts import gTTS
 from flask_cors import CORS
 import jwt
 from functools import wraps
@@ -12,7 +11,14 @@ import uuid
 from datetime import datetime, timezone
 import logging
 import base64
+from flask import Flask, request, jsonify
+import speech_recognition as sr
+from gtts import gTTS
+import playsound
+import webbrowser
 
+
+# Flask 서버 설정
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, allow_headers=["Authorization", "Content-Type"])
 
@@ -25,7 +31,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 SPRING_BOOT_API_URL = os.getenv("SPRING_BOOT_API_URL")
-
 
 # JWT 토큰 검증 데코레이터
 def token_required(f):
@@ -204,5 +209,79 @@ def transcribe():
         return jsonify({"error": "Failed to transcribe audio. Please try again."}), 400
 
 
+# 음성 인식 함수
+def listen_for_command_from_file(audio_file):
+    recognizer = sr.Recognizer()
+
+    # 음성 파일을 처리
+    with sr.AudioFile(audio_file) as source:
+        audio = recognizer.record(source)
+
+    try:
+        # 구글 음성 인식 API로 텍스트로 변환
+        command = recognizer.recognize_google(audio, language="ko-KR")
+        print(f"사용자 명령: {command}")
+        return command
+    except sr.UnknownValueError:
+        print("음성을 이해하지 못했습니다.")
+        return None
+    except sr.RequestError as e:
+        print(f"음성 인식 API 에러: {e}")
+        return None
+
+
+
+# 음성 안내 함수
+def speak(text):
+    tts = gTTS(text=text, lang="ko")
+    tts.save("response.mp3")
+    playsound.playsound("response.mp3")
+
+# 페이지로 이동하는 함수
+def navigate_page(command):
+    if "공지사항" in command:
+        speak("공지사항 페이지로 이동합니다")
+        return "/notices"  # 공지사항 페이지로 이동
+    elif "홈" in command:
+        speak("홈 페이지로 이동합니다")
+        return "/"  # 홈 페이지로 이동
+    elif "말동무" in command:
+        speak("말동무 페이지로 이동합니다")
+        return "/companion"  # 말동무 페이지로 이동
+    else:
+        speak("다시 한번 이동하고 싶은 페이지를 말씀해주세요.")
+        return None
+
+
+# 엔드포인트에서 음성 파일을 받아 명령 처리
+@app.route('/page-stt', methods=['POST'])
+def page_stt():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No Audio file provided'}), 400
+
+    audio_file = request.files['file']
+    audio_path = os.path.join("temp", audio_file.filename)
+    audio_file.save(audio_path)
+
+    # 음성 파일을 인식하여 명령 추출
+    command = listen_for_command_from_file(audio_path)
+
+    # 명령 처리
+    if command:
+        page_url = navigate_page(command)  # 명령에 따라 페이지 이동
+        if page_url:
+            return jsonify({"redirect": page_url}), 200
+        else:
+            return jsonify({"message": "다시 한번 이동하고 싶은 페이지를 말씀해주세요."}), 400
+    else:
+        speak("다시 한번 이동하고 싶은 페이지를 말씀해주세요.")
+        return jsonify({"message": "명령을 인식할 수 없습니다."}), 400
+
+
+
+
+
 if __name__ == "__main__":
+    # Google Cloud 인증 환경 변수 설정 (서비스 계정 JSON 파일 경로)
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path/to/your/service-account-file.json"
     app.run(debug=True, port=5000)
