@@ -1,7 +1,6 @@
 import openai
 import os
 from dotenv import load_dotenv
-from flask import Flask, request, jsonify, send_file
 from pathlib import Path
 from flask_cors import CORS
 import jwt
@@ -11,11 +10,10 @@ import uuid
 from datetime import datetime, timezone
 import logging
 import base64
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import speech_recognition as sr
 from gtts import gTTS
 import playsound
-import webbrowser
 
 
 # Flask 서버 설정
@@ -282,6 +280,4 @@ def page_stt():
 
 
 if __name__ == "__main__":
-    # Google Cloud 인증 환경 변수 설정 (서비스 계정 JSON 파일 경로)
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path/to/your/service-account-file.json"
     app.run(debug=True, port=5000)
